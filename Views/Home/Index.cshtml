@@ -1,0 +1,84 @@
+﻿@{
+    var tokenData = (string)ViewBag.TokenData;
+    var animeService = (AnimeService)ViewBag.AnimeService;
+}
+
+<div class="text-center row justify-content-center">
+    <h1>Animeo</h1>
+    @if (!string.IsNullOrEmpty(tokenData))
+    {
+        <h3>Logged in successfully ✅</h3>
+
+        <div id="options">
+            <h5>Options</h5>
+            <div>
+                <input type="checkbox" id="showCurrent" class="catalogCheck" checked />
+                <label for="showCurrent">Show currently watching Anime</label>
+            </div>
+            <div>
+                <input type="checkbox" id="showCompleted" class="catalogCheck" />
+                <label for="showCompleted">Show Completed Anime</label>
+            </div>
+            <div>
+                <input type="checkbox" id="showTrending" class="catalogCheck" />
+                <label for="showTrending">Show Trending Anime</label>
+            </div>
+        </div>
+        <a id="stremioUrl" href="stremio://@Context.Request.Host">INSTALL</a>
+        <p>
+            <b>PS:</b> If it doesn't work just copy <a id="url" href="@($"https://web.stremio.com/#/addons?addon={Context.Request.Scheme}://{Context.Request.Host}")">this</a> link into your stremio search field.
+        </p>
+    } 
+    else
+    {
+        if (animeService == AnimeService.Kitsu)
+        {
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" class="creds form-control" />
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" class="creds form-control" />
+            </div>
+        }
+        <a id="loginUrl" href='@Url.Action("Login", "Auth", new { animeService })'>Login with @(animeService.ToString())</a>
+        <p>You need to login to use this addon.</p>
+    }
+</div>
+
+<script>
+    var animeService = @Html.Raw(SerializeObject(animeService));
+    var loginUrl = $('#loginUrl').attr('href');
+    var url = $('#url').attr('href');
+    var stremioUrl = $('#stremioUrl').attr('href');
+
+    var config = {
+        tokenData: @Html.Raw(SerializeObject(tokenData)),
+    };
+
+    changeUrl();
+
+    $('.catalogCheck').on('change', function () {
+        changeUrl();
+    });
+
+    function changeUrl() {
+        config.showCurrent = $('#showCurrent').is(':checked');
+        config.showCompleted = $('#showCompleted').is(':checked');
+        config.showTrending = $('#showTrending').is(':checked');
+
+        var tempUrl = '/' + encodeURIComponent(JSON.stringify(config)) + '/manifest.json';
+
+        $('#url').attr('href', url + tempUrl);
+        $('#stremioUrl').attr('href', stremioUrl + tempUrl);
+    }
+
+    $('.creds').on('change', function () {
+        var username = $('#username').val();
+        var password = encodeURIComponent($('#password').val());
+
+        var tempUrl = '?animeService=' + animeService + '&username=' + username + '&password=' + password;
+        $('#loginUrl').attr('href', loginUrl + tempUrl);
+    });
+</script>
